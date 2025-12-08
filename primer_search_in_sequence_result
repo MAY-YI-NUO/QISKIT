@@ -1,0 +1,120 @@
+🔬 QUANTUM PCR PRIMER SEARCH IN MAIZE ADH1 GENE
+============================================================
+📊 ADH1 Sequence Length: 5904 nucleotides
+📊 Database Size: 5904 elements
+
+============================================================
+🔍 SEARCHING FOR PCR PRIMERS USING QUANTUM ALGORITHM
+============================================================
+
+============================================================
+SEARCH RESULTS SUMMARY
+============================================================
+
+🧬 Pair 1:
+----------------------------------------
+
+🎯 Searching for: Forward Primer (23nt)
+   Primer sequence: CGTCGTTTCCCATCTCTTCCTCC
+   Primer length: 23 nucleotides
+   ✅ FOUND at position: 1027
+   🔍 Classical search needed: 1027 comparisons
+   ⚛️  Quantum search would need: ~76 comparisons
+   🚀 Quantum speedup: 13.5x
+   📍 Context: ...CCAAACCGCACCCTCCTTCC[CGTCGTTTCCCATCTCTTCCTCC]TTTAGAGCTACCACTATATA...
+
+🎯 Searching for: Reverse Primer (20nt)
+   Primer sequence: GACTGAGGGTCTCGGAGTGG
+   Primer length: 20 nucleotides
+   ✅ FOUND at position: 1142
+   🔍 Classical search needed: 1142 comparisons
+   ⚛️  Quantum search would need: ~76 comparisons
+   🚀 Quantum speedup: 15.0x
+   📍 Context: ...TGGTTTCGTAACTGGTGAAG[GACTGAGGGTCTCGGAGTGG]ATGATTTGGGATTCTGTTCG...
+
+🧬 Pair 2:
+----------------------------------------
+
+🎯 Searching for: Forward Primer (23nt)
+   Primer sequence: TTGGACTAGAAATCTCGTGCTGA
+   Primer length: 23 nucleotides
+   ❌ NOT FOUND in sequence
+   🔍 Classical search needed: 5882 comparisons
+   ⚛️  Quantum search would need: ~76 comparisons
+
+🎯 Searching for: Reverse Primer (22nt)
+   Primer sequence: GCTACATAGGGAGCCTTGTCCT
+   Primer length: 22 nucleotides
+   ❌ NOT FOUND in sequence
+   🔍 Classical search needed: 5883 comparisons
+   ⚛️  Quantum search would need: ~76 comparisons
+
+============================================================
+📈 QUANTUM VS CLASSICAL PERFORMANCE ANALYSIS
+============================================================
+
+Pair 1:
+   ✅ Both primers found!
+   📏 Expected PCR product size: 138 bp
+   🔍 Total classical comparisons: 2169
+   ⚛️  Total quantum comparisons: ~152
+   🚀 Overall quantum speedup: 14.3x
+
+Pair 2:
+   ⚠️  One or both primers not found
+
+============================================================
+🔬 SEQUENCE SPECIFIC FINDINGS
+============================================================
+
+🎯 INTERESTING FINDING: Pair 1 Forward Primer
+   Primer: CGTCGTTTCCCATCTCTTCCTCC
+   Found at position: 1027
+
+   📍 Extended context (100bp window):
+   ...CGCGCACGTGGTTTGCTTGCCCACAGGCGGCCAAACCGCACCCTCCTTCC[CGTCGTTTCCCATCTCTTCCTCC]TTTAGAGCTACCACTATATAAATCAGGGCTCATTTTCTCGCTCCTCACAG...
+
+   🧪 Sequence analysis:
+   • Found ATG (start codon) 92bp upstream
+   • Found TAA (stop codon) 18bp downstream
+
+============================================================
+💡 QUANTUM COMPUTING INSIGHTS FOR PCR DESIGN
+============================================================
+
+How quantum computing could enhance PCR primer design:
+
+1. **Multi-target searching**: Quantum computers could search for
+   multiple primer pairs simultaneously in superposition
+
+2. **Optimization**: Find optimal primer pairs that minimize
+   secondary structure and maximize specificity
+
+3. **Large database screening**: Quickly screen primer specificity
+   against entire genomes or metagenomic databases
+
+4. **Mismatch tolerance**: Quantum algorithms can be designed to
+   tolerate mismatches (useful for degenerate primers)
+
+5. **Real-time design**: Dynamic primer optimization during
+   PCR experiments based on early amplification results
+
+Current limitations:
+• Quantum hardware still limited (100-400 qubits)
+• Classical methods faster for small databases
+• But quantum advantage grows exponentially with database size
+
+
+============================================================
+✅ SEARCH COMPLETE
+============================================================
+Database scanned: 5904 nucleotides
+Primer pairs searched: 2
+Total possible primer positions: 11808
+
+📊 Theoretical Performance:
+   Total classical operations: 13,934
+   Total quantum operations: ~304
+   Theoretical quantum speedup: 45.8x
+
+============================================================
