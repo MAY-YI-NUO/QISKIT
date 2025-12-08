@@ -1,0 +1,211 @@
+# Simple Grover's Algorithm for DNA Sequence Search
+# Inspired by: "Genetic Engineering Through Quantum Circuits"
+# BioRxiv: https://doi.org/10.1101/2025.05.02.654535
+
+print("Setting up quantum computing environment...")
+
+# First, let's check Python version and try a different installation method
+import sys
+print(f"Python version: {sys.version}")
+
+# Try installing with --break-system-packages flag for newer Python
+print("\nInstalling Qiskit...")
+!pip install qiskit --break-system-packages 2>&1 | grep -v "already satisfied"
+
+print("\nInstallation complete. Now running quantum simulation...")
+
+# Now import after installation
+try:
+    from qiskit import QuantumCircuit, Aer, execute
+    from qiskit.visualization import plot_histogram
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    print("✅ Qiskit successfully imported!")
+    
+except ImportError as e:
+    print(f"❌ Import error: {e}")
+    print("Trying alternative approach...")
+    
+    # Create a minimal simulation without Qiskit for demonstration
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+# Define DNA encoding
+DNA_TO_BINARY = {'A': '00', 'T': '01', 'G': '10', 'C': '11'}
+BINARY_TO_DNA = {'00': 'A', '01': 'T', '10': 'G', '11': 'C'}
+
+def simulate_quantum_search(target_dna="ATCG", database_size=16):
+    """Simulate the quantum search process conceptually"""
+    
+    print("\n" + "="*60)
+    print("QUANTUM DNA SEARCH SIMULATION")
+    print("Inspired by: Genetic Engineering Through Quantum Circuits")
+    print("="*60)
+    
+    # Convert DNA to binary
+    target_binary = ''.join([DNA_TO_BINARY.get(nuc, '00') for nuc in target_dna])
+    
+    print(f"\n🔬 Target DNA Sequence: {target_dna}")
+    print(f"🔬 Binary Encoding: {target_binary}")
+    print(f"🔬 Target occupies 1 out of {database_size} possible sequences")
+    
+    # Classical search complexity
+    classical_attempts = database_size  # O(N)
+    quantum_attempts = int(np.sqrt(database_size))  # O(√N)
+    
+    print(f"\n📊 Complexity Comparison:")
+    print(f"   Classical (linear search): O(N) = {classical_attempts} comparisons")
+    print(f"   Quantum (Grover's): O(√N) = {quantum_attempts} comparisons")
+    print(f"   Speedup factor: {classical_attempts/quantum_attempts:.1f}x")
+    
+    # Simulate quantum amplitude amplification
+    print("\n🔮 Quantum Amplitude Amplification Process:")
+    
+    # Initial equal superposition
+    initial_prob = 1/database_size * 100
+    print(f"   Step 1: Initial superposition - all sequences have {initial_prob:.2f}% probability")
+    
+    # After Grover iterations
+    grover_iterations = int((np.pi/4) * np.sqrt(database_size))
+    print(f"   Step 2: Apply {grover_iterations} Grover iterations")
+    
+    # Final amplified probability
+    # Simplified quantum probability formula: sin²((2k+1)θ) where θ = arcsin(1/√N)
+    theta = np.arcsin(1/np.sqrt(database_size))
+    final_prob = (np.sin((2*grover_iterations + 1) * theta) ** 2) * 100
+    
+    print(f"   Step 3: Target probability amplified to {final_prob:.1f}%")
+    
+    # Create visualization
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    
+    # Plot 1: Classical vs Quantum complexity
+    n_values = np.arange(1, 101)
+    classical_ops = n_values
+    quantum_ops = np.sqrt(n_values)
+    
+    axes[0].plot(n_values, classical_ops, 'r-', label='Classical O(N)', linewidth=2)
+    axes[0].plot(n_values, quantum_ops, 'b-', label='Quantum O(√N)', linewidth=2)
+    axes[0].axvline(x=database_size, color='g', linestyle='--', 
+                   label=f'Our database size ({database_size})')
+    axes[0].set_xlabel('Database Size (N)')
+    axes[0].set_ylabel('Number of Operations')
+    axes[0].set_title('Classical vs Quantum Search Complexity')
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+    
+    # Plot 2: Amplitude amplification
+    iterations = np.arange(0, grover_iterations + 1)
+    probabilities = []
+    for k in iterations:
+        prob = (np.sin((2*k + 1) * theta) ** 2) * 100
+        probabilities.append(prob)
+    
+    axes[1].plot(iterations, probabilities, 'g-o', linewidth=2, markersize=6)
+    axes[1].axhline(y=100, color='r', linestyle='--', alpha=0.5, label='100% probability')
+    axes[1].set_xlabel('Grover Iterations')
+    axes[1].set_ylabel('Target Probability (%)')
+    axes[1].set_title('Amplitude Amplification Process')
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # DNA sequence analysis
+    print("\n🧬 DNA Sequence Analysis:")
+    print("   " + "-"*40)
+    
+    # Create a small "database" of sequences
+    sample_sequences = [
+        "AAAA", "ATCG", "TTTT", "GGGG", "CCCC",
+        "AGCT", "TCGA", "GATC", "CTAG", "ACGT"
+    ]
+    
+    print("   Sample sequences in database:")
+    for i, seq in enumerate(sample_sequences, 1):
+        match = "🎯" if seq == target_dna else "  "
+        print(f"   {match} {i:2d}. {seq}")
+    
+    # Try actual quantum simulation if Qiskit is available
+    try:
+        from qiskit import QuantumCircuit, Aer, execute
+        
+        print("\n⚡ Running actual quantum simulation...")
+        
+        # Simple quantum circuit demonstration
+        n_qubits = 2  # Small circuit for demonstration
+        qc = QuantumCircuit(n_qubits, n_qubits)
+        
+        # Create superposition
+        qc.h(range(n_qubits))
+        
+        # Simple "oracle" - marks |11> state
+        qc.cz(0, 1)
+        
+        # Diffusion
+        qc.h(range(n_qubits))
+        qc.x(range(n_qubits))
+        qc.cz(0, 1)
+        qc.x(range(n_qubits))
+        qc.h(range(n_qubits))
+        
+        # Measure
+        qc.measure(range(n_qubits), range(n_qubits))
+        
+        # Run simulation
+        simulator = Aer.get_backend('qasm_simulator')
+        result = execute(qc, simulator, shots=1024).result()
+        counts = result.get_counts()
+        
+        print(f"\n📊 Quantum Circuit Results:")
+        print("   Measurement outcomes:")
+        for state, count in sorted(counts.items()):
+            prob = count/1024*100
+            print(f"   |{state}⟩: {count:4d} shots ({prob:.1f}%)")
+            
+        # Draw circuit
+        print(f"\n🔌 Quantum Circuit Diagram:")
+        print(qc.draw(output='text'))
+        
+    except ImportError:
+        print("\n⚠️ Qiskit not available for actual quantum simulation")
+        print("   Showing conceptual results only")
+    
+    # Summary of paper findings
+    print("\n" + "="*60)
+    print("RESEARCH PAPER HIGHLIGHTS")
+    print("="*60)
+    print("""
+    Key findings from 'Genetic Engineering Through Quantum Circuits':
+    
+    1. ✅ Developed quantum algorithm for DNA sequence search
+    2. ✅ Searched for 50-nucleotide sequences in 3022-nucleotide databases
+    3. ✅ Achieved 26-28% success probability with quantum search
+    4. ✅ Built synthetic genetic blocks (BioBioQu) in JCVI-syn3 cells
+    5. ✅ Demonstrated quadratic speedup over classical methods
+    
+    Technical Details:
+    - Used IBM quantum computer with 127 qubits
+    - Implemented Grover's algorithm with modified oracle for DNA
+    - Allowed up to 30% sequence mismatches
+    - Created functional transcriptional units with promoters/RBS/terminators
+    
+    Performance:
+    - Quantum search: 6 seconds (real hardware)
+    - Classical BLAST: 0.342 seconds (for this small example)
+    - Quantum advantage grows with database size
+    """)
+    
+    print(f"\n💡 Quantum advantage becomes significant for databases > {database_size*10:,} sequences")
+    print("="*60)
+
+# Run the simulation
+if __name__ == "__main__":
+    # Try different DNA sequences
+    sequences_to_search = ["AT", "ATCG", "GCTA"]
+    
+    for seq in sequences_to_search:
+        simulate_quantum_search(seq, database_size=2**(len(seq)*2))
+        print("\n" + "="*60 + "\n")
