@@ -1,0 +1,24 @@
+PCR PRIMER SEARCH RESULTS
+==================================================
+
+Sequence: 5904 bp
+GC content: 44.1%
+
+PRIMER PAIRS:
+
+Pair 1:
+  Forward: CGTCGTTTCCCATCTCTTCCTCC
+  Reverse: GACTGAGGGTCTCGGAGTGG
+  Forward position: 1027
+  Reverse position: 1142
+  Expected PCR product: 138 bp
+
+Pair 2:
+  Forward: TTGGACTAGAAATCTCGTGCTGA
+  Reverse: GCTACATAGGGAGCCTTGTCCT
+  Forward position: Not found
+  Reverse position: Not found
+
+PERFORMANCE:
+  Total classical time: 50.87 μs
+  Total estimated quantum time: 704.00 μs
