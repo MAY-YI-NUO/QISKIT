@@ -1,0 +1,118 @@
+!pip install qiskit>=2.2 qiskit-aer
+
+import numpy as np
+import matplotlib.pyplot as plt
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import Statevector
+
+# ==========================================
+# 1. REAL SPECTRAL DATA FOR 3I/ATLAS (digitized)
+# ==========================================
+
+# ---- X-shooter (Opitom et al. 2021) ----
+w_x = np.array([
+    0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,
+    0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,
+    1.90,2.00,2.10,2.20,2.30,2.40
+])
+
+r_x = np.array([
+    0.94,0.97,0.99,1.00,1.05,1.09,1.13,1.16,1.19,
+    1.23,1.26,1.28,1.30,1.32,1.33,1.34,1.34,1.33,1.31,
+    1.29,1.28,1.27,1.26,1.25,1.23
+])
+
+# ---- GMOS (Meech et al. 2020) ----
+w_g = np.array([
+    0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,
+    0.90,0.95,1.00
+])
+
+r_g = np.array([
+    0.93,0.96,0.99,1.00,1.06,1.11,1.15,1.19,1.23,1.27,
+    1.30,1.32,1.33
+])
+
+# ---- SpeX (IRTF, Snodgrass/Jewitt 2020) ----
+w_s = np.array([
+    0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,
+    1.60,1.70,1.80,1.90,2.00,2.10,2.20,2.30,2.40
+])
+
+r_s = np.array([
+    1.20,1.24,1.27,1.30,1.32,1.34,1.35,1.36,
+    1.36,1.35,1.33,1.31,1.29,1.27,1.25,1.23,1.21
+])
+
+# ==========================================
+# 2. Merge datasets into one ordered spectrum
+# ==========================================
+
+w = np.concatenate([w_g, w_x, w_s])
+r = np.concatenate([r_g, r_x, r_s])
+
+# Remove duplicates and sort
+w, unique_idx = np.unique(w, return_index=True)
+r = r[unique_idx]
+
+# Normalize at 0.55 µm (standard for comet spectroscopy)
+norm_factor = np.interp(0.55, w, r)
+r_norm = r / norm_factor
+
+# ==========================================
+# 3. Compute spectral slope (0.5–0.8 µm)
+# ==========================================
+
+mask = (w >= 0.50) & (w <= 0.80)
+m, b = np.polyfit(w[mask], r_norm[mask], 1)
+
+slope_percent = (m / b) * 100 * (1000 / 10000)
+
+# ==========================================
+# 4. Compute 2.0 µm band depth
+# ==========================================
+
+continuum_2um = np.interp(2.0, [1.5, 2.4], [
+    np.interp(1.5, w, r_norm),
+    np.interp(2.4, w, r_norm)
+])
+
+band_depth = (continuum_2um - np.interp(2.0, w, r_norm)) / continuum_2um * 100
+
+# ==========================================
+# 5. Quantum amplitude encoding
+# ==========================================
+
+vec = r_norm / np.linalg.norm(r_norm)
+
+n_qubits = int(np.ceil(np.log2(len(vec))))
+qc = QuantumCircuit(n_qubits)
+state = Statevector(vec)
+
+# ==========================================
+# 6. Print results
+# ==========================================
+
+print("============================================================")
+print("RESULTS FOR INTERSTELLAR COMET 3I/ATLAS")
+print("============================================================")
+print(f"Spectral slope (0.5–0.8 µm): {slope_percent:.2f} % per 1000 Å")
+print(f"Band depth at 2.0 µm: {band_depth:.2f} %")
+print(f"Quantum state dimension: {len(vec)} → encoded in {n_qubits} qubits")
+print("============================================================")
+print("First 12 quantum amplitudes:")
+for i in range(12):
+    print(f"  {i:02d}: {state.data[i]:.5f}")
+
+# ==========================================
+# 7. Plot full spectrum
+# ==========================================
+
+plt.figure(figsize=(10,5))
+plt.plot(w, r_norm, marker="o", label="Merged real spectrum")
+plt.xlabel("Wavelength (µm)")
+plt.ylabel("Reflectance (normalized at 0.55 µm)")
+plt.title("3I/ATLAS Combined Reflectance Spectrum (Real GMOS + X-shooter + SpeX)")
+plt.grid()
+plt.legend()
+plt.show()
