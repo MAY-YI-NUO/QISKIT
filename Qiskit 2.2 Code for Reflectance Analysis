@@ -1,0 +1,44 @@
+!pip install qiskit>=2.2 qiskit-aer
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import Statevector, SparsePauliOp
+from qiskit_aer import AerSimulator
+# Example dummy data – replace with your real GMOS / X-shooter / SpeX data
+wavelength = np.array([0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.5, 2.0, 2.2])  # microns
+reflectance = np.array([1.0, 1.11, 1.13, 1.15, 1.16, 1.18, 1.19, 1.05, 1.02])
+# Compute slope between 0.5 and 0.8 microns
+mask = (wavelength >= 0.5) & (wavelength <= 0.8)
+x = wavelength[mask]
+y = reflectance[mask]
+
+# linear fit
+m, b = np.polyfit(x, y, 1)
+
+# convert slope to % per 1000 Å (1 micron = 10,000 Å)
+slope_percent = (m / b) * 100 * (1000 / 10000)
+print("Spectral slope (0.5–0.8 µm):", slope_percent, "% per 1000 Å")
+# 2.0 µm band depth
+continuum = np.interp(2.0, [1.5, 2.2], [reflectance[6], reflectance[8]])
+band_depth = (continuum - reflectance[7]) / continuum * 100
+# Normalize reflectance for amplitude encoding
+vec = reflectance / np.linalg.norm(reflectance)
+
+qc = QuantumCircuit(int(np.ceil(np.log2(len(vec)))))
+
+state = Statevector.from_instruction(qc)
+state = Statevector(vec)  # directly use as statevector
+
+print("Quantum state amplitudes:")
+print(state.data)
+plt.figure(figsize=(8,4))
+plt.plot(wavelength, reflectance, marker='o')
+plt.xlabel("Wavelength (µm)")
+plt.ylabel("Reflectance (normalized)")
+plt.title("Reflectance Spectrum of 3I/ATLAS (Example)")
+plt.grid()
+plt.show()
+
+print("Band depth at 2.0 µm:", band_depth, "%")
