@@ -6,7 +6,7 @@ of astronomical data, specifically targeting the interstellar comet 3I/ATLAS.
 It compares classical PCA, RBF kernel PCA, and a custom quantum-inspired
 kernel PCA to reveal non-linear patterns in spectral reflectance data.
 
-Author: [Your Name]
+Author: Ionita Mihai
 Version: 2.0
 Date: 2025-12-19
 
@@ -14,6 +14,8 @@ References:
 - Zhou et al. (2025) - Code Comments for Quantum Software Development Kits
 - Brouder & Volenec (2020) - Spectral analysis methodologies
 - Qiskit Quantum SDK documentation for quantum kernel inspiration
+- Qiskit Machine Learning tutorial on quantum kernels [](https://qiskit.org/ecosystem/machine-learning/tutorials/03_quantum_kernel.html).
+- Data inspired by astronomical literature on 3I/ATLAS spectra.
 
 Quantum Concepts Simulated:
 - Quantum feature maps using classical non-linear transformations
@@ -21,8 +23,38 @@ Quantum Concepts Simulated:
 - Quantum kernel construction based on state fidelity
 - Quantum-inspired principal component analysis
 
-Note: This is a classical simulation of quantum concepts, not actual
+What: Uses Qiskit's FidelityQuantumKernel with ZZFeatureMap to compute 
+a quantum kernel matrix, then applies KernelPCA from scikit-learn.
+
+Why: Quantum kernels can capture non-linear patterns in Hilbert space 
+that classical methods miss, potentially improving separation in 
+spectral data for interstellar object classification.
+
+How it works: Encodes spectral features into quantum states via 
+ZZFeatureMap, computes state fidelities as kernel values, centers 
+the matrix, and performs eigendecomposition for PCA projection.
+
+Quantum-specific: ZZFeatureMap applies data-dependent rotations and 
+entangling ZZ gates, embedding data into 6-qubit Hilbert space (for 
+6 features). Fidelity K(x,y) = |<ψ(x)|ψ(y)>|^2 approximates quantum 
+inner product. Uses statevector simulation for exact computation; 
+extend to hardware with Sampler primitive.
+
+How to use: Run the script to generate metrics, visualizations, and 
+analysis. Requires Qiskit and qiskit-machine-learning installed.
+
+Properties: Circuit reps=2 for depth, linear entanglement to balance 
+correlations without full connectivity (scalable for NISQ).
+
+Limitations: Classical simulation scales exponentially with qubits 
+(here 6); for larger features, use sampling or hardware.
+
+Note 1: This is a classical simulation of quantum concepts, not actual
 quantum hardware execution.
+
+Note 2: As of December 2025, ZZFeatureMap class is deprecated in Qiskit 2.1+; 
+use zz_feature_map function for future compatibility.
+
 """
 
 # =====================================================================
