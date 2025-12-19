@@ -1,6 +1,24 @@
 """
 Quantum-Inspired Spectral Analysis of 3I/ATLAS Interstellar Object
 
+SCOPE & LIMITATIONS (MANDATORY SCIENTIFIC DISCLAIMER)
+---------------------------------------------------------------------
+This program implements a QUANTUM-INSPIRED kernel method using
+purely classical computation.
+
+IMPORTANT CLARIFICATIONS:
+• No quantum hardware is used
+• No quantum circuit is simulated
+• No quantum speedup or quantum advantage is claimed
+• The term "quantum" refers ONLY to mathematically motivated
+  nonlinear feature maps inspired by quantum state overlap
+
+This work follows the quantum kernel learning literature as a
+REPRESENTATIONAL method, not a physical quantum simulation.
+
+All astrophysical conclusions are derived from classical
+spectral metrics and statistical structure, not quantum effects.
+
 This module implements quantum-inspired kernel methods for spectral analysis
 of astronomical data, specifically targeting the interstellar comet 3I/ATLAS.
 It compares classical PCA, RBF kernel PCA, and a custom quantum-inspired
