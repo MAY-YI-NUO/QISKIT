@@ -1,90 +1,194 @@
-# FIXED VERSION - WITH PROPER INTERPRETATION
-!pip install qiskit qiskit-aer
+# FIXED VERSION - WITH PROPER INTERPRETATION AND ERROR HANDLING
 
-import numpy as np
-from qiskit import QuantumCircuit, transpile
-from qiskit_aer import Aer
-from qiskit.visualization import plot_histogram
-import matplotlib.pyplot as plt
+"""
+Quantum-Enhanced Probabilistic Optimization for Fertilizer Application
+
+This module implements a quantum decision system for optimizing phosphorus fertilizer
+application across multiple agricultural fields using Qiskit quantum circuits.
+The quantum algorithm balances nutrient deficits against fertilizer costs to
+generate probabilistic recommendations with economic analysis.
+
+Author: Ionita Mihai
+Version: 2.0
+Date: 2025-12-19
+
+References:
+- Brouder & Volenec (2020) - Field crop nutrient requirements and costs
+- Zhou et al. (2025) - Code Comments for Quantum Software Development Kits
+- Qiskit Quantum SDK documentation for circuit design and execution
+
+Quantum Circuit Design:
+- Each qubit represents a field fertilizer decision (|0⟩=skip, |1⟩=apply)
+- Ry rotations encode deficit/cost trade-offs into quantum amplitudes
+- Controlled-X gates create entanglement to model field dependencies
+- Measurement collapses superposition into specific recommendations
+
+Note: This implementation uses Qiskit's Aer simulator for classical simulation
+of quantum circuits, not actual quantum hardware.
+
+This script uses a parameterized quantum circuit in Qiskit to generate probabilistic
+recommendations for phosphorus fertilizer application across multiple fields.
+
+What: Encodes nutrient deficits and fertilizer costs into qubit rotation angles,
+applies limited entanglement, and samples measurement outcomes to suggest binary
+allocation patterns (1 = apply fertilizer, 0 = skip).
+
+Why: Demonstrates how quantum superposition and entanglement can explore multiple
+solutions simultaneously, providing probabilistic guidance for cost-yield trade-offs
+in precision agriculture.
+
+Quantum-specific: Uses RY gates to bias initial state amplitudes based on classical
+parameters (simulating a variational ansatz). Limited CX gates create pairwise
+entanglement to correlate decisions. This is inspired by simple quantum machine
+learning / optimization prototypes, not a full QAOA.
+
+How to use: Run directly with provided data. Extend by increasing entanglement depth
+or using real quantum backend (e.g., IBM Quantum).
+
+Properties: Circuit depth O(n), suitable for simulation. No barriers needed
+for qasm_simulator.
+
+Limitations: This is a classical simulation on Aer; results are probabilistic and
+illustrative. Not guaranteed optimal—compare with classical heuristics.
+
+References: Circuit design inspired by variational quantum algorithms;
+data from Brouder & Volenec (2020).
+
+Note: As of December 2025, use qiskit-aer for simulation; for hardware, consider
+noise models.
+"""
+!pip install qiskit qiskit-aer numpy matplotlib
+try:
+    import numpy as np
+    from qiskit import QuantumCircuit, transpile
+    from qiskit_aer import Aer
+    from qiskit.visualization import plot_histogram
+    import matplotlib.pyplot as plt
+except ImportError as e:
+    print(f"Error importing required modules: {str(e)}")
+    print("Please ensure Qiskit, qiskit-aer, NumPy, and Matplotlib are installed.")
+    raise
 
 def create_improved_fertilizer_circuit(num_fields, deficits, costs):
-    """Create quantum circuit with varied rotation angles"""
-    qc = QuantumCircuit(num_fields, num_fields)
-    
-    # Initialize with varied rotations based on deficit AND cost
-    for i in range(num_fields):
-        deficit_ratio = min(1.0, max(0.1, deficits[i]))  # 10% to 100%
-        # Adjust based on cost: cheaper fertilizer = more likely to apply
-        cost_factor = 1.0 - (costs[i] / max(costs))  # 0 to 1, cheaper = higher
-        combined_factor = 0.7 * deficit_ratio + 0.3 * cost_factor
-        angle = np.pi * combined_factor
-        qc.ry(angle, i)
-    
-    # Add strategic entanglement (not all-to-all)
-    for i in range(0, num_fields-1, 2):  # Entangle pairs
-        qc.cx(i, i+1)
-    
-    qc.measure_all()
-    return qc
+    """
+    Create a parameterized quantum circuit for fertilizer allocation.
+
+    What: Builds a quantum circuit with biased superposition and pairwise entanglement.
+
+    Why: To encode problem parameters into quantum state amplitudes, allowing
+    probabilistic sampling of solutions that balance deficit severity and cost.
+
+    How it works (quantum-specific):
+    - RY(θ) gates rotate qubits from |0⟩ toward |1⟩ with angle θ = π × combined_factor.
+      Larger θ → higher probability of measuring '1' (apply fertilizer).
+    - combined_factor = 0.7 × deficit_ratio + 0.3 × cost_factor
+      (weighted toward need, moderated by cost).
+    - Pairwise CX gates entangle adjacent qubits, correlating decisions
+      (e.g., if one field needs fertilizer, nearby might too).
+
+    Mathematics: Initial state ≈ Σ α_i |i⟩ where |α_i|^2 biased by parameters.
+    Entanglement introduces correlations not possible in classical bit flips.
+
+    Properties: Circuit depth O(n), suitable for simulation. No barriers needed
+    for qasm_simulator.
+
+    How to use: qc = create_improved_fertilizer_circuit(5, deficits, costs)
+    """
+    try:
+        qc = QuantumCircuit(num_fields, num_fields)
+        
+        # Initialize with varied rotations based on deficit AND cost
+        for i in range(num_fields):
+            deficit_ratio = min(1.0, max(0.1, deficits[i]))  # 10% to 100%
+            # Adjust based on cost: cheaper fertilizer = more likely to apply
+            cost_factor = 1.0 - (costs[i] / max(costs))  # 0 to 1, cheaper = higher
+            combined_factor = 0.7 * deficit_ratio + 0.3 * cost_factor
+            angle = np.pi * combined_factor
+            qc.ry(angle, i)
+        
+        # Add strategic entanglement (not all-to-all)
+        for i in range(0, num_fields-1, 2):  # Entangle pairs
+            qc.cx(i, i+1)
+        
+        qc.measure_all()
+        return qc
+    except Exception as e:
+        print(f"Error creating quantum circuit: {str(e)}")
+        raise
 
 def interpret_results(bitstring, field_nutrients, crop_needs, fertilizer_costs):
-    """Interpret the quantum results in agricultural terms"""
-    n = len(field_nutrients)
-    bitstring = bitstring.zfill(n)[-n:]  # Ensure correct length
-    
-    print(f"\n🎯 QUANTUM RECOMMENDATION INTERPRETATION")
-    print("=" * 60)
-    print(f"Fertilizer Plan: {bitstring}")
-    print("\nField-by-field Action Plan:")
-    print("-" * 60)
-    
-    total_savings = 0
-    total_yield_loss = 0
-    decisions = []
-    
-    for i in range(n):
-        apply = bitstring[i] == '1'
-        deficit = crop_needs[i] - field_nutrients[i]
+    """
+    Interpret the quantum results in agricultural terms.
+
+    What: Translates bitstring into field-specific actions, costs, and yields.
+
+    Why: To provide human-readable agricultural recommendations from quantum output.
+
+    How: Parses bitstring for apply/skip decisions; computes simplified economics
+    based on deficits and costs.
+
+    How to use: decisions, savings, yield_loss = interpret_results(bitstring, ...)
+    """
+    try:
+        n = len(field_nutrients)
+        bitstring = bitstring.zfill(n)[-n:]  # Ensure correct length
         
-        if apply:
-            # Calculate DAP needed (simplified)
-            dap_needed_kg = deficit * 5  # Simplified conversion
-            cost = dap_needed_kg * (fertilizer_costs[i] / 1000)
-            yield_benefit = deficit * 0.4  # Estimated yield benefit (tons/ha)
-            action = "✅ APPLY"
-            reason = f"Deficit: {deficit:.1f} ppm"
-        else:
-            cost = 0
-            yield_benefit = -deficit * 0.2  # Yield loss without fertilizer
-            action = "❌ SKIP"
-            # Determine why to skip
-            if fertilizer_costs[i] > 570:
-                reason = f"High cost: ${fertilizer_costs[i]}/ton"
-            elif deficit < 12:
-                reason = f"Moderate deficit: {deficit:.1f} ppm"
+        print(f"\n🎯 QUANTUM RECOMMENDATION INTERPRETATION")
+        print("=" * 60)
+        print(f"Fertilizer Plan: {bitstring}")
+        print("\nField-by-field Action Plan:")
+        print("-" * 60)
+        
+        total_savings = 0
+        total_yield_loss = 0
+        decisions = []
+        
+        for i in range(n):
+            apply = bitstring[i] == '1'
+            deficit = crop_needs[i] - field_nutrients[i]
+            
+            if apply:
+                # Calculate DAP needed (simplified)
+                dap_needed_kg = deficit * 5  # Simplified conversion
+                cost = dap_needed_kg * (fertilizer_costs[i] / 1000)
+                yield_benefit = deficit * 0.4  # Estimated yield benefit (tons/ha)
+                action = "✅ APPLY"
+                reason = f"Deficit: {deficit:.1f} ppm"
             else:
-                reason = f"Quantum optimization preference"
+                cost = 0
+                yield_benefit = -deficit * 0.2  # Yield loss without fertilizer
+                action = "❌ SKIP"
+                # Determine why to skip
+                if fertilizer_costs[i] > 570:
+                    reason = f"High cost: ${fertilizer_costs[i]}/ton"
+                elif deficit < 12:
+                    reason = f"Moderate deficit: {deficit:.1f} ppm"
+                else:
+                    reason = f"Quantum optimization preference"
+            
+            decisions.append({
+                'field': i+1,
+                'action': action,
+                'cost': cost,
+                'yield_impact': yield_benefit,
+                'reason': reason
+            })
+            
+            total_savings += cost if not apply else 0
+            total_yield_loss += -yield_benefit if yield_benefit < 0 else 0
+            
+            print(f"Field {i+1}: {action}")
+            print(f"  Soil P: {field_nutrients[i]} ppm | Required: {crop_needs[i]} ppm")
+            print(f"  Deficit: {deficit:.1f} ppm | DAP Cost: ${fertilizer_costs[i]}/ton")
+            print(f"  Reason: {reason}")
+            print(f"  Cost impact: ${cost:.2f}")
+            print(f"  Yield impact: {yield_benefit:+.2f} tons/ha")
+            print()
         
-        decisions.append({
-            'field': i+1,
-            'action': action,
-            'cost': cost,
-            'yield_impact': yield_benefit,
-            'reason': reason
-        })
-        
-        total_savings += cost if not apply else 0
-        total_yield_loss += -yield_benefit if yield_benefit < 0 else 0
-        
-        print(f"Field {i+1}: {action}")
-        print(f"  Soil P: {field_nutrients[i]} ppm | Required: {crop_needs[i]} ppm")
-        print(f"  Deficit: {deficit:.1f} ppm | DAP Cost: ${fertilizer_costs[i]}/ton")
-        print(f"  Reason: {reason}")
-        print(f"  Cost impact: ${cost:.2f}")
-        print(f"  Yield impact: {yield_benefit:+.2f} tons/ha")
-        print()
-    
-    return decisions, total_savings, total_yield_loss
+        return decisions, total_savings, total_yield_loss
+    except Exception as e:
+        print(f"Error interpreting results: {str(e)}")
+        raise
 
 # REAL RESEARCH DATA
 # Brouder, S. M., & Volenec, J. J. (2020)
@@ -100,204 +204,229 @@ print("Data Source: Brouder & Volenec (2020), Field Crops Research")
 print()
 
 # Calculate deficits (as ratios)
-deficits = []
-for i in range(n_fields):
-    deficit = crop_needs[i] - field_nutrients[i]
-    deficit_ratio = deficit / crop_needs[i]  # 0 to 1
-    deficits.append(deficit_ratio)
-    print(f"Field {i+1}: Deficit = {deficit:.1f} ppm ({deficit_ratio*100:.0f}%)")
+try:
+    deficits = []
+    for i in range(n_fields):
+        deficit = crop_needs[i] - field_nutrients[i]
+        deficit_ratio = deficit / crop_needs[i]  # 0 to 1
+        deficits.append(deficit_ratio)
+        print(f"Field {i+1}: Deficit = {deficit:.1f} ppm ({deficit_ratio*100:.0f}%)")
+except Exception as e:
+    print(f"Error calculating deficits: {str(e)}")
+    raise
 
 # Create and run improved circuit
-qc = create_improved_fertilizer_circuit(n_fields, deficits, fertilizer_costs)
+try:
+    qc = create_improved_fertilizer_circuit(n_fields, deficits, fertilizer_costs)
 
-print("\n🔬 QUANTUM CIRCUIT")
-print("-" * 40)
-print(qc.draw(fold=-1))
+    print("\n🔬 QUANTUM CIRCUIT")
+    print("-" * 40)
+    print(qc.draw(fold=-1))
 
-# Run simulation
-backend = Aer.get_backend('qasm_simulator')
-transpiled_qc = transpile(qc, backend)
-shots = 4096
-print(f"\n🔍 Running {shots} quantum simulations...")
-job = backend.run(transpiled_qc, shots=shots)
-result = job.result()
-counts = result.get_counts()
+    # Run simulation
+    backend = Aer.get_backend('qasm_simulator')
+    transpiled_qc = transpile(qc, backend)
+    shots = 4096
+    print(f"\n🔍 Running {shots} quantum simulations...")
+    job = backend.run(transpiled_qc, shots=shots)
+    result = job.result()
+    counts = result.get_counts()
 
-print(f"\n📊 QUANTUM RESULTS SUMMARY")
-print("-" * 40)
-print(f"Unique solutions found: {len(counts)}")
+    print(f"\n📊 QUANTUM RESULTS SUMMARY")
+    print("-" * 40)
+    print(f"Unique solutions found: {len(counts)}")
 
-# Display top 5 results
-sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+    # Display top 5 results
+    sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
 
-print("\nTop 5 Quantum Recommendations:")
-print("Rank | Recommendation | Probability | Frequency")
-print("-" * 50)
-for rank, (bitstring, count) in enumerate(sorted_counts[:5]):
-    prob = count / shots * 100
-    print(f"{rank+1:4d} | {bitstring:13s} | {prob:10.1f}% | {count:9d}")
+    print("\nTop 5 Quantum Recommendations:")
+    print("Rank | Recommendation | Probability | Frequency")
+    print("-" * 50)
+    for rank, (bitstring, count) in enumerate(sorted_counts[:5]):
+        prob = count / shots * 100
+        print(f"{rank+1:4d} | {bitstring:13s} | {prob:10.1f}% | {count:9d}")
 
-# Get most probable solution
-best_bitstring, best_count = sorted_counts[0]
-best_prob = best_count / shots * 100
+    # Get most probable solution
+    best_bitstring, best_count = sorted_counts[0]
+    best_prob = best_count / shots * 100
 
-print(f"\n🌟 MOST PROBABLE SOLUTION")
-print(f"Recommendation: {best_bitstring}")
-print(f"Confidence: {best_prob:.1f}%")
-print(f"Interpretation: ", end="")
+    print(f"\n🌟 MOST PROBABLE SOLUTION")
+    print(f"Recommendation: {best_bitstring}")
+    print(f"Confidence: {best_prob:.1f}%")
+    print(f"Interpretation: ", end="")
 
-# Simple interpretation
-ones_count = best_bitstring.count('1')
-if ones_count == 0:
-    print("Apply NO fertilizer to any field")
-elif ones_count == n_fields:
-    print("Apply fertilizer to ALL fields")
-elif ones_count <= n_fields // 2:
-    print(f"Apply fertilizer to {ones_count} out of {n_fields} fields (selective application)")
-else:
-    print(f"Apply fertilizer to {ones_count} out of {n_fields} fields (broad application)")
+    # Simple interpretation
+    ones_count = best_bitstring.count('1')
+    if ones_count == 0:
+        print("Apply NO fertilizer to any field")
+    elif ones_count == n_fields:
+        print("Apply fertilizer to ALL fields")
+    elif ones_count <= n_fields // 2:
+        print(f"Apply fertilizer to {ones_count} out of {n_fields} fields (selective application)")
+    else:
+        print(f"Apply fertilizer to {ones_count} out of {n_fields} fields (broad application)")
 
-# Detailed interpretation
-decisions, savings, yield_loss = interpret_results(best_bitstring, 
-                                                   field_nutrients, 
-                                                   crop_needs, 
-                                                   fertilizer_costs)
+    # Detailed interpretation
+    decisions, savings, yield_loss = interpret_results(best_bitstring, 
+                                                       field_nutrients, 
+                                                       crop_needs, 
+                                                       fertilizer_costs)
+except Exception as e:
+    print(f"Error in quantum simulation or interpretation: {str(e)}")
+    raise
 
 # Economic analysis
-print("\n💰 ECONOMIC ANALYSIS")
-print("-" * 40)
-total_cost = sum(d['cost'] for d in decisions)
-total_yield_impact = sum(d['yield_impact'] for d in decisions)
-wheat_price = 250  # $/ton
+try:
+    print("\n💰 ECONOMIC ANALYSIS")
+    print("-" * 40)
+    total_cost = sum(d['cost'] for d in decisions)
+    total_yield_impact = sum(d['yield_impact'] for d in decisions)
+    wheat_price = 250  # $/ton
 
-if total_yield_impact > 0:
-    revenue_impact = total_yield_impact * wheat_price
-    net_benefit = revenue_impact - total_cost
-    print(f"Expected yield increase: {total_yield_impact:.2f} tons")
-    print(f"Expected revenue increase: ${revenue_impact:.2f}")
-    print(f"Total fertilizer cost: ${total_cost:.2f}")
-    print(f"Net economic benefit: ${net_benefit:.2f}")
-    if total_cost > 0:
-        roi = (net_benefit / total_cost) * 100
-        print(f"Return on Investment: {roi:.1f}%")
-else:
-    print(f"Cost savings from not applying: ${savings:.2f}")
-    print(f"Potential yield loss: {-total_yield_impact:.2f} tons")
-    print(f"Potential revenue loss: ${-total_yield_impact * wheat_price:.2f}")
+    if total_yield_impact > 0:
+        revenue_impact = total_yield_impact * wheat_price
+        net_benefit = revenue_impact - total_cost
+        print(f"Expected yield increase: {total_yield_impact:.2f} tons")
+        print(f"Expected revenue increase: ${revenue_impact:.2f}")
+        print(f"Total fertilizer cost: ${total_cost:.2f}")
+        print(f"Net economic benefit: ${net_benefit:.2f}")
+        if total_cost > 0:
+            roi = (net_benefit / total_cost) * 100
+            print(f"Return on Investment: {roi:.1f}%")
+    else:
+        print(f"Cost savings from not applying: ${savings:.2f}")
+        print(f"Potential yield loss: {-total_yield_impact:.2f} tons")
+        print(f"Potential revenue loss: ${-total_yield_impact * wheat_price:.2f}")
+except Exception as e:
+    print(f"Error in economic analysis: {str(e)}")
+    raise
 
 # Compare with classical approach
-print("\n🔄 COMPARISON WITH CLASSICAL APPROACH")
-print("-" * 40)
-print("Classical rule: Apply if deficit > 12 ppm and cost < $570/ton")
-classical_decisions = []
-for i in range(n_fields):
-    deficit = crop_needs[i] - field_nutrients[i]
-    apply_classical = (deficit > 12) and (fertilizer_costs[i] < 570)
-    classical_decisions.append('1' if apply_classical else '0')
-classical_bitstring = ''.join(classical_decisions)
+try:
+    print("\n🔄 COMPARISON WITH CLASSICAL APPROACH")
+    print("-" * 40)
+    print("Classical rule: Apply if deficit > 12 ppm and cost < $570/ton")
+    classical_decisions = []
+    for i in range(n_fields):
+        deficit = crop_needs[i] - field_nutrients[i]
+        apply_classical = (deficit > 12) and (fertilizer_costs[i] < 570)
+        classical_decisions.append('1' if apply_classical else '0')
+    classical_bitstring = ''.join(classical_decisions)
 
-print(f"Classical recommendation: {classical_bitstring}")
-print(f"Quantum recommendation:   {best_bitstring}")
+    print(f"Classical recommendation: {classical_bitstring}")
+    print(f"Quantum recommendation:   {best_bitstring}")
 
-if classical_bitstring == best_bitstring:
-    print("✅ Quantum and classical approaches AGREE")
-else:
-    print("🔀 Quantum and classical approaches DIFFER")
-    diff_count = sum(1 for i in range(n_fields) 
-                    if classical_bitstring[i] != best_bitstring[i])
-    print(f"Different decisions in {diff_count} out of {n_fields} fields")
+    if classical_bitstring == best_bitstring:
+        print("✅ Quantum and classical approaches AGREE")
+    else:
+        print("🔀 Quantum and classical approaches DIFFER")
+        diff_count = sum(1 for i in range(n_fields) 
+                        if classical_bitstring[i] != best_bitstring[i])
+        print(f"Different decisions in {diff_count} out of {n_fields} fields")
+except Exception as e:
+    print(f"Error in classical comparison: {str(e)}")
+    raise
 
 # Create better visualization
-print("\n📈 PROBABILITY DISTRIBUTION VISUALIZATION")
-# Get probabilities for all possible outcomes
-all_outcomes = [format(i, f'0{n_fields}b') for i in range(2**n_fields)]
-probabilities = []
+try:
+    print("\n📈 PROBABILITY DISTRIBUTION VISUALIZATION")
+    # Get probabilities for all possible outcomes
+    all_outcomes = [format(i, f'0{n_fields}b') for i in range(2**n_fields)]
+    probabilities = []
 
-for outcome in all_outcomes:
-    if outcome in counts:
-        probabilities.append(counts[outcome] / shots * 100)
-    else:
-        probabilities.append(0)
+    for outcome in all_outcomes:
+        if outcome in counts:
+            probabilities.append(counts[outcome] / shots * 100)
+        else:
+            probabilities.append(0)
 
-# Create bar chart
-plt.figure(figsize=(14, 6))
-bars = plt.bar(range(len(all_outcomes)), probabilities, color='skyblue', edgecolor='black')
-plt.xlabel('Fertilizer Allocation Pattern (Binary: 1=Apply, 0=Skip)', fontsize=12)
-plt.ylabel('Probability (%)', fontsize=12)
-plt.title('Quantum Probability Distribution for Fertilizer Allocation', fontsize=14, fontweight='bold')
-plt.xticks(range(len(all_outcomes)), all_outcomes, rotation=90, fontsize=10)
+    # Create bar chart
+    plt.figure(figsize=(14, 6))
+    bars = plt.bar(range(len(all_outcomes)), probabilities, color='skyblue', edgecolor='black')
+    plt.xlabel('Fertilizer Allocation Pattern (Binary: 1=Apply, 0=Skip)', fontsize=12)
+    plt.ylabel('Probability (%)', fontsize=12)
+    plt.title('Quantum Probability Distribution for Fertilizer Allocation', fontsize=14, fontweight='bold')
+    plt.xticks(range(len(all_outcomes)), all_outcomes, rotation=90, fontsize=10)
 
-# Highlight the best solution
-best_index = all_outcomes.index(best_bitstring) if best_bitstring in all_outcomes else -1
-if best_index >= 0:
-    bars[best_index].set_color('gold')
-    bars[best_index].set_edgecolor('darkorange')
-    plt.annotate(f'Best: {probabilities[best_index]:.1f}%', 
-                xy=(best_index, probabilities[best_index]),
-                xytext=(0, 10), textcoords='offset points',
-                ha='center', fontweight='bold', color='darkred')
+    # Highlight the best solution
+    best_index = all_outcomes.index(best_bitstring) if best_bitstring in all_outcomes else -1
+    if best_index >= 0:
+        bars[best_index].set_color('gold')
+        bars[best_index].set_edgecolor('darkorange')
+        plt.annotate(f'Best: {probabilities[best_index]:.1f}%', 
+                    xy=(best_index, probabilities[best_index]),
+                    xytext=(0, 10), textcoords='offset points',
+                    ha='center', fontweight='bold', color='darkred')
 
-plt.grid(axis='y', alpha=0.3)
-plt.tight_layout()
-plt.show()
+    plt.grid(axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+except Exception as e:
+    print(f"Error in visualization: {str(e)}")
+    raise
 
 # Decision matrix
-print("\n🧠 DECISION MATRIX - FIELD-BY-FIELD ANALYSIS")
-print("=" * 80)
-print(f"{'Field':<6} {'Soil P':<8} {'Req P':<8} {'Deficit':<10} {'DAP Cost':<12} {'Quantum':<12} {'Classical':<12} {'Decision':<15}")
-print("-" * 80)
+try:
+    print("\n🧠 DECISION MATRIX - FIELD-BY-FIELD ANALYSIS")
+    print("=" * 80)
+    print(f"{'Field':<6} {'Soil P':<8} {'Req P':<8} {'Deficit':<10} {'DAP Cost':<12} {'Quantum':<12} {'Classical':<12} {'Decision':<15}")
+    print("-" * 80)
 
-for i in range(n_fields):
-    deficit = crop_needs[i] - field_nutrients[i]
-    quantum_rec = "APPLY" if best_bitstring[i] == '1' else "SKIP"
-    classical_rec = "APPLY" if classical_bitstring[i] == '1' else "SKIP"
-    
-    # Color code decisions
-    if quantum_rec == classical_rec:
-        decision = "AGREE"
-        color = "🟢"  # Green for agreement
-    else:
-        decision = "DIFFER"
-        color = "🟡"  # Yellow for difference
-    
-    print(f"{i+1:<6} {field_nutrients[i]:<8.1f} {crop_needs[i]:<8.1f} {deficit:<10.1f} "
-          f"${fertilizer_costs[i]:<11} {quantum_rec:<12} {classical_rec:<12} {color} {decision:<10}")
+    for i in range(n_fields):
+        deficit = crop_needs[i] - field_nutrients[i]
+        quantum_rec = "APPLY" if best_bitstring[i] == '1' else "SKIP"
+        classical_rec = "APPLY" if classical_bitstring[i] == '1' else "SKIP"
+        
+        # Color code decisions
+        if quantum_rec == classical_rec:
+            decision = "AGREE"
+            color = "🟢"  # Green for agreement
+        else:
+            decision = "DIFFER"
+            color = "🟡"  # Yellow for difference
+        
+        print(f"{i+1:<6} {field_nutrients[i]:<8.1f} {crop_needs[i]:<8.1f} {deficit:<10.1f} "
+              f"${fertilizer_costs[i]:<11} {quantum_rec:<12} {classical_rec:<12} {color} {decision:<10}")
+except Exception as e:
+    print(f"Error in decision matrix: {str(e)}")
+    raise
 
 print("\n" + "=" * 70)
 print("CONCLUSION & RECOMMENDATIONS")
 print("=" * 70)
 
 # Generate final recommendation
-if best_bitstring.count('1') == 0:
-    print("🎯 FINAL RECOMMENDATION: DO NOT APPLY FERTILIZER")
-    print("   Reason: Quantum optimization suggests the economic benefit does not")
-    print("   justify the fertilizer costs given current prices and yield responses.")
-elif best_bitstring.count('1') == n_fields:
-    print("🎯 FINAL RECOMMENDATION: APPLY FERTILIZER TO ALL FIELDS")
-    print("   Reason: Significant nutrient deficits exist across all fields,")
-    print("   and yield benefits outweigh fertilizer costs.")
-else:
-    fields_to_apply = [i+1 for i, bit in enumerate(best_bitstring) if bit == '1']
-    fields_to_skip = [i+1 for i, bit in enumerate(best_bitstring) if bit == '0']
-    
-    print(f"🎯 FINAL RECOMMENDATION: SELECTIVE APPLICATION")
-    print(f"   Apply to fields: {', '.join(map(str, fields_to_apply))}")
-    print(f"   Skip fields: {', '.join(map(str, fields_to_skip))}")
-    print("   Reason: Quantum optimization identifies optimal cost-benefit balance.")
+try:
+    if best_bitstring.count('1') == 0:
+        print("🎯 FINAL RECOMMENDATION: DO NOT APPLY FERTILIZER")
+        print("   Reason: Quantum optimization suggests the economic benefit does not")
+        print("   justify the fertilizer costs given current prices and yield responses.")
+    elif best_bitstring.count('1') == n_fields:
+        print("🎯 FINAL RECOMMENDATION: APPLY FERTILIZER TO ALL FIELDS")
+        print("   Reason: Significant nutrient deficits exist across all fields,")
+        print("   and yield benefits outweigh fertilizer costs.")
+    else:
+        fields_to_apply = [i+1 for i, bit in enumerate(best_bitstring) if bit == '1']
+        fields_to_skip = [i+1 for i, bit in enumerate(best_bitstring) if bit == '0']
+        
+        print(f"🎯 FINAL RECOMMENDATION: SELECTIVE APPLICATION")
+        print(f"   Apply to fields: {', '.join(map(str, fields_to_apply))}")
+        print(f"   Skip fields: {', '.join(map(str, fields_to_skip))}")
+        print("   Reason: Quantum optimization identifies optimal cost-benefit balance.")
 
-print("\n⚠️  IMPORTANT CONSIDERATIONS:")
-print("1. These recommendations are based on the specific data from Brouder & Volenec (2020)")
-print("2. Real-world decisions should consider additional factors: weather, soil type, etc.")
-print("3. Quantum results provide probabilistic guidance, not deterministic rules")
-print("4. Regular soil testing is recommended for precision agriculture")
+    print("\n⚠️  IMPORTANT CONSIDERATIONS:")
+    print("1. These recommendations are based on the specific data from Brouder & Volenec (2020)")
+    print("2. Real-world decisions should consider additional factors: weather, soil type, etc.")
+    print("3. Quantum results provide probabilistic guidance, not deterministic rules")
+    print("4. Regular soil testing is recommended for precision agriculture")
 
-print("\n" + "=" * 70)
-print("CITATION")
-print("=" * 70)
-print("Research data adapted from:")
-print("Brouder, S. M., & Volenec, J. J. (2020).")
-print('"Impact of Climate Change on Crop Nutrient Requirements."')
-print("Field Crops Research, 255, 107870.")
-
-
-
+    print("\n" + "=" * 70)
+    print("CITATION")
+    print("=" * 70)
+    print("Research data adapted from:")
+    print("Brouder, S. M., & Volenec, J. J. (2020).")
+    print('"Impact of Climate Change on Crop Nutrient Requirements."')
+    print("Field Crops Research, 255, 107870.")
+except Exception as e:
+    print(f"Error in conclusions: {str(e)}")
+    raise
